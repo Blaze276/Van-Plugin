@@ -1,0 +1,20 @@
+name: VanPlugin
+version: '${project.version}'
+main: org.blaze.vanplugin.VanPlugin
+api-version: '1.16'
+
+commands:
+  van-credits:
+    description: Gets Van QoL Plugin credits.
+  van-features:
+    description: Features included with Van
+  home:
+    description: teleports home
+    usage: /home
+  sethome:
+    description: sets home teleport loc
+    usage: /sethome
+  luatopia:
+    description: luatopia
+  dannylandia:
+    description: dannylandia
