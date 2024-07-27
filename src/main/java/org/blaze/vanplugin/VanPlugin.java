@@ -7,13 +7,17 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.*;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -28,6 +32,14 @@ import org.bukkit.block.data.type.Stairs;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.event.inventory.FurnaceSmeltEvent;
+import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Rabbit;
+
+import java.util.Random;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -68,27 +80,30 @@ public final class VanPlugin extends JavaPlugin implements Listener  {
         this.getCommand("van-features").setExecutor(new VanCmd());
         this.getCommand("home").setExecutor((new VanCmd()));
         this.getCommand("sethome").setExecutor((new VanCmd()));
-        this.getCommand("luatopia").setExecutor((new VanCmd()));
-        this.getCommand("dannylandia").setExecutor((new VanCmd()));
+        // this.getCommand("luatopia").setExecutor((new VanCmd()));
+        // this.getCommand("dannylandia").setExecutor((new VanCmd()));
+        getServer().addRecipe(getSmeltingRecipe());
+        getServer().addRecipe(getRabbitStewRecipe());
 
         getServer().getPluginManager().registerEvents(this, this);
 
-        System.out.println("[]======[Enabling Van QoL plugin]=====[]");
-        System.out.println("|  Hello there!!");
-        System.out.println("|  Blaze276 says hello!!");
-        System.out.println("|  Powershot300 says hi!!");
-        System.out.println("|");
-        System.out.println("| project github:");
-        System.out.println("|  https://coming.soon/Blaze276/Van");
-        System.out.println("|");
-        System.out.println("| Contributors:");
-        System.out.println("|  Blaze276: https://github.com/Blaze276");
-        System.out.println("|  Powershot300: https://github.com/101Corp");
-        System.out.println("|");
-        System.out.println("|  THANKS FOR USING <3!");
-        System.out.println("|");
-        System.out.println("[]====================================[]");
+        Bukkit.getLogger().info("[]======[Enabling Van QoL plugin]=====[]");
+        Bukkit.getLogger().info("|  Hello there!!");
+        Bukkit.getLogger().info("|  Blaze276 says hello!!");
+        Bukkit.getLogger().info("|  Powershot300 says hi!!");
+        Bukkit.getLogger().info("|");
+        Bukkit.getLogger().info("| project github:");
+        Bukkit.getLogger().info("|  https://coming.soon/Blaze276/Van");
+        Bukkit.getLogger().info("|");
+        Bukkit.getLogger().info("| Contributors:");
+        Bukkit.getLogger().info("|  Blaze276: https://github.com/Blaze276");
+        Bukkit.getLogger().info("|  Powershot300: https://github.com/101Corp");
+        Bukkit.getLogger().info("|");
+        Bukkit.getLogger().info("|  THANKS FOR USING <3!");
+        Bukkit.getLogger().info("|");
+        Bukkit.getLogger().info("[]====================================[]");
     }
+
     @EventHandler
     public void onExplosion(EntityExplodeEvent event) {
         Iterator var2 = event.blockList().iterator();
@@ -102,14 +117,85 @@ public final class VanPlugin extends JavaPlugin implements Listener  {
             }
         }
     }
+
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         LivingEntity entity = event.getEntity();
         if (entity.getType() == EntityType.WOLF) {
             event.getDrops().clear();
-            event.getDrops().add(new ItemStack(Material.BEEF, 3));
+
+            ItemStack rawDog = new ItemStack(Material.BEEF, 3);
+            ItemMeta meta = rawDog.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName(ChatColor.RESET + "Raw Dog");
+                rawDog.setItemMeta(meta);
+            }
+
+            event.getDrops().add(rawDog);
         }
     }
+
+    @EventHandler
+    public void onFurnaceSmelt(FurnaceSmeltEvent event) {
+        ItemStack source = event.getSource();
+        ItemStack result = event.getResult();
+
+        if (source.getType() == Material.BEEF && source.hasItemMeta()) {
+            ItemMeta sourceMeta = source.getItemMeta();
+            if (sourceMeta != null &&  "Raw Dog".equals(sourceMeta.getDisplayName())) {
+
+            ItemMeta resultMeta = result.getItemMeta();
+
+                if (resultMeta != null) {
+                    resultMeta.setDisplayName(ChatColor.RESET + "Cooked Dog");
+                    result.setItemMeta(resultMeta);
+                }
+
+                event.setResult(result);
+            }
+        }
+    }
+
+
+    private FurnaceRecipe getSmeltingRecipe() {
+        ItemStack result = new ItemStack(Material.COOKED_BEEF);
+        ItemMeta meta = result.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.RESET + "Cooked Dog");
+            result.setItemMeta(meta);
+        }
+        NamespacedKey key = new NamespacedKey(this, "smelted_raw_dog");
+        return new FurnaceRecipe(key, result, Material.BEEF, 0.1f, 200);
+    }
+
+    private ShapelessRecipe getRabbitStewRecipe() {
+        ItemStack dogStew = new ItemStack(Material.RABBIT_STEW);
+        ItemMeta meta = dogStew.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.GREEN + "Dog Stew");
+            dogStew.setItemMeta(meta);
+        }
+
+        NamespacedKey key = new NamespacedKey(this, "dog_stew");
+        ShapelessRecipe recipe = new ShapelessRecipe(key, dogStew);
+
+        // Ingredients
+        recipe.addIngredient(new RecipeChoice.ExactChoice(createCookedDogItem())); // Use cooked dog meat with specific meta
+        recipe.addIngredient(Material.BOWL);
+
+        return recipe;
+    }
+
+    private ItemStack createCookedDogItem() {
+        ItemStack cookedDog = new ItemStack(Material.COOKED_BEEF);
+        ItemMeta meta = cookedDog.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.RESET + "Cooked Dog");
+            cookedDog.setItemMeta(meta);
+        }
+        return cookedDog;
+    }
+
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
@@ -184,10 +270,11 @@ public final class VanPlugin extends JavaPlugin implements Listener  {
 
     private final HashMap<UUID, ArmorStand> sittingPlayers = new HashMap<>();
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock() != null && event.getClickedBlock().getType().toString().endsWith("_STAIRS")) {
             Player player = event.getPlayer();
+
             BlockData blockData = event.getClickedBlock().getBlockData();
 
             if (blockData instanceof Stairs) {
@@ -196,38 +283,40 @@ public final class VanPlugin extends JavaPlugin implements Listener  {
 
                 switch (stairs.getFacing()) {
                     case NORTH:
-                        yaw = 180 + 180; // 180 degrees added
+                        yaw = 0; // 180 degrees added
                         break;
                     case SOUTH:
                         yaw = 180; // 180 degrees added
                         break;
                     case WEST:
-                        yaw = 90 + 180; // 180 degrees added
+                        yaw = 270; // 180 degrees added
                         break;
                     case EAST:
-                        yaw = 270 + 180; // 180 degrees added
+                        yaw = 90; // 180 degrees added
                         break;
                     default:
                         break;
                 }
 
-                    // Adjust the height of the armor stand to match the sitting position on stairs
-                    ArmorStand armorStand = (ArmorStand) player.getWorld().spawnEntity(
-                            event.getClickedBlock().getLocation().add(0.5, 0.5, 0.5), // Adjust Y-coordinate as needed
-                            EntityType.ARMOR_STAND
-                    );
-                    armorStand.setVisible(false);
-                    armorStand.setGravity(false);
-                    armorStand.setMarker(true);
-                    armorStand.setSmall(true);
-                    armorStand.setRotation(yaw, 0);
+                // Adjust the height of the armor stand to match the sitting position on stairs
+                ArmorStand armorStand = (ArmorStand) player.getWorld().spawnEntity(
+                        event.getClickedBlock().getLocation().add(0.5, 0.5, 0.5), // Adjust Y-coordinate as needed
+                        EntityType.ARMOR_STAND
+                );
 
-                    // Make the player sit on the ArmorStand
-                    armorStand.addPassenger(player);
-                    sittingPlayers.put(player.getUniqueId(), armorStand);
-                }
+                armorStand.setVisible(false);
+                armorStand.setGravity(false);
+                armorStand.setMarker(true);
+                armorStand.setSmall(true);
+                armorStand.setRotation(yaw, 0);
+
+                // Make the player sit on the ArmorStand
+                armorStand.addPassenger(player);
+                sittingPlayers.put(player.getUniqueId(), armorStand);
+
             }
         }
+    }
 
 
     @EventHandler
@@ -239,9 +328,17 @@ public final class VanPlugin extends JavaPlugin implements Listener  {
                 ArmorStand armorStand = sittingPlayers.get(player.getUniqueId());
                 armorStand.remove();
                 sittingPlayers.remove(player.getUniqueId());
+
+                // Teleport the player up by one block
+                Location currentLocation = player.getLocation();
+                Location newLocation = currentLocation.add(0, 1, 0);
+                player.teleport(newLocation);
             }
         }
     }
+
+
+
 
     public class VanCmd implements CommandExecutor {
         @Override
@@ -298,7 +395,7 @@ public final class VanPlugin extends JavaPlugin implements Listener  {
                     sender.sendMessage("my question is how are you running this?");
                 }
             }
-            if (cmd.getName().equalsIgnoreCase("luatopia")) {
+            /* if (cmd.getName().equalsIgnoreCase("luatopia")) {
                 if (canTeleportHome((Player) sender)) {
                     Player player = (Player) sender;
                     Location location = new Location(player.getWorld(), -1617, 64, -215);
@@ -319,7 +416,7 @@ public final class VanPlugin extends JavaPlugin implements Listener  {
                     sender.sendMessage("You cannot use /dannylandia for 30 seconds after taking damage.");
                 }
                 return true;
-            }
+            } */
             return false;
         }
 
@@ -362,13 +459,13 @@ public final class VanPlugin extends JavaPlugin implements Listener  {
                 String searchText = player.getUniqueId().toString();
                 int lineNumber = getLatestLineNumber(homes, searchText);
                 if (lineNumber != -1) {
-                    System.out.println("The most recent occurrence of \"" + searchText + "\" is at line: " + lineNumber);
+                    Bukkit.getLogger().info("The most recent occurrence of \"" + searchText + "\" is at line: " + lineNumber);
                 }
                 String lineContent = getLine(data, lineNumber);
                 if (lineContent != null) {
-                    System.out.println("Content of line " + lineNumber + ": " + lineContent);
+                    Bukkit.getLogger().info("Content of line " + lineNumber + ": " + lineContent);
                 } else {
-                    System.out.println("Line " + lineNumber + " not found in the file.");
+                    Bukkit.getLogger().info("Line " + lineNumber + " not found in the file.");
                 }
 
                 assert lineContent != null;
@@ -444,20 +541,20 @@ public final class VanPlugin extends JavaPlugin implements Listener  {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        System.out.println("[]=====[Disabling Van QoL plugin]=====[]");
-        System.out.println("|  Goodbye!!");
-        System.out.println("|  Blaze276 was here!!");
-        System.out.println("|  Powershot300 was here too!!");
-        System.out.println("|");
-        System.out.println("| project github:");
-        System.out.println("|  https://github.com/Blaze276/Van-Plugin");
-        System.out.println("|");
-        System.out.println("| Contributors:");
-        System.out.println("|  Blaze276: https://github.com/Blaze276");
-        System.out.println("|  Powershot300: https://github.com/101Corp");
-        System.out.println("|");
-        System.out.println("|  THANKS FOR USING <3!");
-        System.out.println("|");
-        System.out.println("[]====================================[]");
+        Bukkit.getLogger().info("[]=====[Disabling Van QoL plugin]=====[]");
+        Bukkit.getLogger().info("|  Goodbye!!");
+        Bukkit.getLogger().info("|  Blaze276 was here!!");
+        Bukkit.getLogger().info("|  Powershot300 was here too!!");
+        Bukkit.getLogger().info("|");
+        Bukkit.getLogger().info("| project github:");
+        Bukkit.getLogger().info("|  https://github.com/Blaze276/Van-Plugin");
+        Bukkit.getLogger().info("|");
+        Bukkit.getLogger().info("| Contributors:");
+        Bukkit.getLogger().info("|  Blaze276: https://github.com/Blaze276");
+        Bukkit.getLogger().info("|  Powershot300: https://github.com/101Corp");
+        Bukkit.getLogger().info("|");
+        Bukkit.getLogger().info("|  THANKS FOR USING <3!");
+        Bukkit.getLogger().info("|");
+        Bukkit.getLogger().info("[]====================================[]");
     }
 }
